@@ -1,27 +1,10 @@
-package com.ved.reviewms.review;
+package com.ved.jobms.job.external;
 
-;
-import jakarta.persistence.*;
-
-@Entity
 public class Review {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private String description;
     private double rating;
-    private Long companyId;
-
-    public Review() {
-    }
-
-    public Review(Long id, String name, String description, double rating) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.rating = rating;
-    }
 
     public Long getId() {
         return id;
@@ -45,14 +28,6 @@ public class Review {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public Long getCompanyId() {
-        return companyId;
-    }
-
-    public void setCompanyId(Long companyId) {
-        this.companyId = companyId;
     }
 
     public double getRating() {
