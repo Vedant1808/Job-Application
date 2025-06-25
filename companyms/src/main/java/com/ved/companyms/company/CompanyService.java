@@ -1,5 +1,7 @@
 package com.ved.companyms.company;
 
+import com.ved.companyms.company.dto.ReviewMessage;
+
 import java.util.List;
 
 public interface CompanyService {
@@ -12,4 +14,6 @@ public interface CompanyService {
     boolean updateCompany(Long id, Company company);
 
     boolean deleteCompanyById(Long id);
+
+    public void updateCompanyRating(ReviewMessage reviewMessage);
 }
