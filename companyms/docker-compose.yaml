@@ -1,6 +1,7 @@
 services:
   postgres:
-    container_name: postgres_container
+    container_name: postgres
+    image : postgres
     environment:
       - POSTGRES_USER=vedacode
       - POSTGRES_PASSWORD=vedacode
@@ -12,13 +13,14 @@ services:
     networks:
       - postgres
     restart: unless-stopped
-    image: postgres
+
   pgadmin4:
-    container_name: pgadmin_container
+    container_name: pgadmin
+    image: dpage/pgadmin4
     environment:
-      - PGADMIN_DEFAULT_EMAIL=pgadmin4@pgadmin.org
-      - PGADMIN_DEFAULT_PASSWORD=admin
-      - PGADMIN_CONFIG_SERVER_MODE=False
+       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+       PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
       - pgadmin:/var/lib/pgadmin
     ports:
@@ -26,14 +28,86 @@ services:
     networks:
       - postgres
     restart: unless-stopped
-    image: dpage/pgadmin4
+
+  config-server-ms:
+    image: veda0101/config-server-ms:latest
+    container_name: config-server-ms
+    ports:
+      - 8080:8080
+    depends_on:
+      - servicereg
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  servicereg:
+    image: veda0101/servicereg:latest
+    container_name: servicereg
+    ports:
+      - 8761:8761
+    depends_on:
+      - rabbitmq
+      - zipkin
+      - postgres
+      - pgadmin4
+    networks:
+      - microservice-network
+      - postgres
+
+  companyms:
+    image: veda0101/companyms:latest
+    container_name: company
+    ports:
+      - 8081:8081
+    depends_on:
+      - servicereg
+      - config-server-ms
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  jobms:
+    image: veda0101/jobms:latest
+    container_name: job
+    ports:
+      - 8082:8082
+    depends_on:
+      - servicereg
+      - config-server-ms
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://servicereg:8761/eureka
+
+  reviewms:
+    image: veda0101/reviewms:latest
+    container_name: review
+    ports:
+      - 8083:8083
+    depends_on:
+      - servicereg
+      - config-server-ms
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
   zipkin:
     image: openzipkin/zipkin
     container_name: zipkin
     ports:
       - 9411:9411
     networks:
+      - microservice-network
       - postgres
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -41,8 +115,25 @@ services:
       - 5672:5672
       - 15672:15672
     networks:
+      - microservice-network
       - postgres
+
+  gateway-ms:
+    image: veda0101/gateway-ms:latest
+    container_name: gatewayms
+    ports:
+      - 8084:8084
+    depends_on:
+      - servicereg
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
 networks:
+  microservice-network:
+    driver: bridge
   postgres:
     driver: bridge
 volumes:
